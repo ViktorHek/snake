@@ -1,6 +1,6 @@
 require 'ruby2d'
 
-set background: 'olive'
+set background: 'maroon'
 set fps_cap: 20
 
 GRID_SIZE = 20
@@ -43,6 +43,14 @@ class Snake
     when 'right' then new_direction != 'left'
     end
   end
+
+  def x
+    head[0]
+  end
+
+  def y
+    head[1]
+  end
   
   private
 
@@ -64,6 +72,17 @@ class Game
 
   def draw
     Square.new(x: @apple_x * GRID_SIZE, y: @apple_y * GRID_SIZE, size: GRID_SIZE, color: 'green')
+    Text.new("Score #{@score}", color: "white", x: 10, y: 10, size: 25 )
+  end
+
+  def snake_eat_apple?(x, y)
+    @apple_x == x && @apple_y == y
+  end
+
+  def points
+    @score += 1
+    @apple_x = rand(GRID_WIDTH)
+    @apple_y = rand(GRID_HEIGHT)
   end
 end
 
@@ -76,6 +95,10 @@ update do
   snake.move
   snake.draw
   game.draw
+
+  if game.snake_eat_apple?(snake.x, snake.y)
+    game.points
+  end
 end
 
 on :key_down do |event|
