@@ -13,6 +13,8 @@ class Snake
   def initialize
     @positions = [[2, 0],[2, 1], [2, 2], [2, 3]] 
     @direction = 'down'
+    @growing = false
+    @finished = false
   end
 
   def draw
@@ -22,7 +24,9 @@ class Snake
   end
 
   def move
-    @positions.shift
+    if !@growing
+      @positions.shift
+    end
     case @direction
     when 'down'
       @positions.push(new_coords(head[0], head[1] + 1))
@@ -33,6 +37,7 @@ class Snake
     when 'right'
       @positions.push(new_coords(head[0] + 1, head[1]))
     end
+    @growing = false
   end
 
   def can_change_direction?(new_direction)
@@ -50,6 +55,14 @@ class Snake
 
   def y
     head[1]
+  end
+
+  def grow
+    @growing = true
+  end
+
+  def die?
+    @positions.uniq.length != @positions.length
   end
   
   private
@@ -71,8 +84,10 @@ class Game
   end
 
   def draw
-    Square.new(x: @apple_x * GRID_SIZE, y: @apple_y * GRID_SIZE, size: GRID_SIZE, color: 'green')
-    Text.new("Score #{@score}", color: "white", x: 10, y: 10, size: 25 )
+    unless finished?
+      Square.new(x: @apple_x * GRID_SIZE, y: @apple_y * GRID_SIZE, size: GRID_SIZE, color: 'green')
+    end
+    Text.new(message, color: "white", x: 10, y: 10, size: 25 )
   end
 
   def snake_eat_apple?(x, y)
@@ -84,6 +99,24 @@ class Game
     @apple_x = rand(GRID_WIDTH)
     @apple_y = rand(GRID_HEIGHT)
   end
+
+  def finish
+    @finished = true
+  end
+
+  def finished?
+    @finished
+  end
+
+  private 
+
+  def message
+    if finished?
+      "GG WP, Your Score was #{@score}. hit 'R' and try again"
+    else 
+      "Score: #{@score}"
+    end
+  end
 end
 
 snake = Snake.new
@@ -91,21 +124,30 @@ game = Game.new
 
 update do
   clear 
-  
-  snake.move
+  unless game.finished?
+    snake.move
+  end
   snake.draw
   game.draw
 
   if game.snake_eat_apple?(snake.x, snake.y)
     game.points
+    snake.grow
+  end
+
+  if snake.die?
+    game.finish
   end
 end
 
 on :key_down do |event|
   if ['up', 'down', 'left', 'right'].include?(event.key) 
     if snake.can_change_direction?(event.key)
-    snake.direction = event.key
+      snake.direction = event.key
     end
+  elsif event.key == 'r'
+    snake = Snake.new
+    game = Game.new
   end
 end
 
